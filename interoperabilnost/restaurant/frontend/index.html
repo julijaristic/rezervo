@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="api-base" content="http://127.0.0.1:8001">
+  <title>Panel restorana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <div class="container">
+    <header class="app-header">
+      <div class="brand">
+        <h1>Panel restorana</h1>
+        <p class="tagline">Pregledajte zahteve za rezervaciju, potvrdite ili odbijte termine i pratite obaveštenja za vaš lokal.</p>
+      </div>
+      <div id="user-info" class="user-info hidden">
+        <div class="notif-bell-wrap">
+          <button type="button" id="btn-notifications" class="btn btn-ghost btn-notif-bell" aria-label="Obaveštenja">
+            <svg class="notif-bell-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
+              <path d="M13.73 21a2 2 0 01-3.46 0"></path>
+            </svg>
+            <span id="notif-unread-badge" class="notif-badge hidden">0</span>
+          </button>
+          <div id="notif-panel" class="notif-panel hidden">
+            <div class="notif-panel-header">
+              <h3>Obaveštenja</h3>
+              <button type="button" id="btn-refresh-notifications" class="btn btn-ghost btn-sm">Osveži</button>
+            </div>
+            <ul id="notifications-list" class="notif-list"></ul>
+            <p id="notifications-empty" class="empty-state hidden">Nema obaveštenja.</p>
+          </div>
+        </div>
+        <span id="venue-badge" class="badge badge-role hidden"></span>
+        <span id="username" class="username"></span>
+        <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Odjavi se</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="auth-section">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab active" data-tab="login" role="tab">Prijava</button>
+          <button type="button" class="tab" data-tab="register" role="tab">Registracija</button>
+        </div>
+
+        <form id="login-form" class="panel card">
+          <h2>Prijava</h2>
+          <p class="auth-lead">Unesite nalog koji ste napravili kada ste registrovali restoran.</p>
+          <div class="field">
+            <label for="login-username">Korisničko ime</label>
+            <input id="login-username" class="input" type="text" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="login-password">Lozinka</label>
+            <input id="login-password" class="input" type="password" required autocomplete="current-password">
+          </div>
+          <p id="login-error" class="alert alert-error hidden"></p>
+          <button type="submit" class="btn btn-primary btn-block">Prijavi se</button>
+        </form>
+
+        <form id="register-form" class="panel card hidden">
+          <h2>Registracija restorana</h2>
+          <p class="auth-lead">Napravite nalog za osoblje i popunite podatke o lokalu. Nakon registracije, vaš restoran se pojavljuje u Rezervu i gosti mogu slati zahteve za termin.</p>
+          <div class="field">
+            <label for="reg-username">Korisničko ime</label>
+            <input id="reg-username" class="input" type="text" required minlength="2" autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="reg-password">Lozinka (min. 6)</label>
+            <input id="reg-password" class="input" type="password" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="field"><label for="nv-name">Naziv lokala</label><input id="nv-name" class="input" type="text" required></div>
+            <div class="field"><label for="nv-address">Adresa</label><input id="nv-address" class="input" type="text" required></div>
+            <div class="field row">
+              <div><label for="nv-city">Grad</label><input id="nv-city" class="input" type="text" required></div>
+              <div><label for="nv-country">Država</label><input id="nv-country" class="input" type="text" value="Srbija" required></div>
+            </div>
+            <div class="field row">
+              <div><label for="nv-phone">Telefon</label><input id="nv-phone" class="input" type="tel" required></div>
+              <div><label for="nv-email">Email</label><input id="nv-email" class="input" type="email" required></div>
+            </div>
+            <div class="field">
+              <label for="nv-table-count">Broj stolova</label>
+              <input id="nv-table-count" class="input" type="number" min="1" max="200" value="30" required>
+            </div>
+            <p class="label">Radno vreme</p>
+            <p class="muted opening-hours-hint">Zatvaranje istog dana (npr. 10:00-22:00). Rad posle ponoći trenutno nije podržan.</p>
+            <div class="field row">
+              <div><label for="nv-wd-open">Pon-Pet od</label><input id="nv-wd-open" class="input" type="time" value="10:00" required></div>
+              <div><label for="nv-wd-close">Pon-Pet do</label><input id="nv-wd-close" class="input" type="time" value="22:00" required></div>
+            </div>
+            <div class="field row">
+              <div><label for="nv-we-open">Vikend od</label><input id="nv-we-open" class="input" type="time" value="10:00" required></div>
+              <div><label for="nv-we-close">Vikend do</label><input id="nv-we-close" class="input" type="time" value="22:00" required></div>
+            </div>
+          <p id="register-error" class="alert alert-error hidden"></p>
+          <button type="submit" class="btn btn-primary btn-block">Registruj nalog</button>
+        </form>
+      </section>
+
+      <section id="inbox-section" class="hidden">
+        <div class="panel card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <h2 class="section-title" style="margin:0;">Inbox zahteva</h2>
+            <button type="button" id="btn-refresh-inbox" class="btn btn-ghost btn-sm">Osveži</button>
+          </div>
+          <p id="inbox-venue-hint" class="muted"></p>
+          <div class="inbox-filters">
+            <label for="inbox-filter-date">Datum</label>
+            <div class="inbox-filter-line">
+              <input id="inbox-filter-date" class="input" type="date">
+              <div class="inbox-filter-actions">
+                <button type="button" id="btn-inbox-filter" class="btn btn-ghost">Primeni</button>
+                <button type="button" id="btn-inbox-filter-clear" class="btn btn-ghost">Obriši filter</button>
+              </div>
+            </div>
+            <p id="inbox-filter-status" class="muted inbox-filter-status hidden"></p>
+          </div>
+          <ul id="inbox-list" class="reservation-list"></ul>
+          <p id="inbox-empty" class="empty-state hidden">Još nema zahteva za rezervaciju. Kada gost pošalje termin, pojaviće se ovde.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="action-confirm-modal" class="popup-overlay hidden" role="dialog" aria-modal="true">
+    <div class="popup-box card action-confirm-box">
+      <h3 id="action-confirm-title"></h3>
+      <p id="action-confirm-message" class="action-confirm-message muted"></p>
+      <dl id="action-confirm-details" class="status-result-details"></dl>
+      <div id="action-confirm-table-wrap" class="field hidden">
+        <label id="action-confirm-table-label" for="action-confirm-table">Broj stola</label>
+        <input id="action-confirm-table" class="input" type="number" min="1" max="30" required>
+      </div>
+      <div id="action-confirm-reason-wrap" class="field hidden">
+        <label for="action-confirm-reason">Razlog odbijanja (opciono)</label>
+        <textarea id="action-confirm-reason" class="input" rows="3" maxlength="500" placeholder="Npr. pun kapacitet u tom terminu"></textarea>
+      </div>
+      <div class="action-confirm-actions">
+        <button type="button" id="action-confirm-cancel" class="btn btn-ghost">Odustani</button>
+        <button type="button" id="action-confirm-ok" class="btn btn-primary">Potvrdi</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inbox-detail-modal" class="popup-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="inbox-detail-title">
+    <div class="popup-box card">
+      <h3 id="inbox-detail-title">Detalji rezervacije</h3>
+      <dl id="inbox-detail-list" class="status-result-details"></dl>
+      <button type="button" id="inbox-detail-close" class="btn btn-primary btn-block">Zatvori</button>
+    </div>
+  </div>
+
+  <div id="result-popup" class="popup-overlay hidden" role="dialog" aria-modal="true">
+    <div id="result-popup-box" class="popup-box status-result">
+      <div id="result-popup-icon" class="status-result-icon" aria-hidden="true"></div>
+      <h3 id="result-popup-title"></h3>
+      <p id="result-popup-lead" class="status-result-lead"></p>
+      <button type="button" id="result-popup-close" class="btn btn-primary btn-block">U redu</button>
+    </div>
+  </div>
+
+  <script src="js/app.js?v=2"></script>
+</body>
+</html>

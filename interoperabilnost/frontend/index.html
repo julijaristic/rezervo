@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="api-base" content="http://127.0.0.1:8000">
+  <title>Rezervo - rezervacije stolova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <div class="container">
+    <header class="app-header">
+      <div class="brand">
+        <h1>Rezervo</h1>
+        <p class="tagline">Rezervišite sto online - lokal potvrđuje zahtev preko partnerskog sistema, vi pratite status ovde.</p>
+      </div>
+      <div id="user-info" class="user-info hidden">
+        <div class="notif-bell-wrap">
+          <button type="button" id="btn-notifications" class="btn btn-ghost btn-notif-bell" aria-label="Obaveštenja" aria-expanded="false" aria-haspopup="true">
+            <svg class="notif-bell-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
+              <path d="M13.73 21a2 2 0 01-3.46 0"></path>
+            </svg>
+            <span id="notif-unread-badge" class="notif-badge hidden">0</span>
+          </button>
+          <div id="notif-panel" class="notif-panel hidden" role="region" aria-label="Lista obaveštenja">
+            <div class="notif-panel-header">
+              <h3>Obaveštenja</h3>
+              <button type="button" id="btn-refresh-notifications" class="btn btn-ghost btn-sm">Osveži</button>
+            </div>
+            <ul id="notifications-list" class="notif-list"></ul>
+            <p id="notifications-empty" class="empty-state hidden">Nema obaveštenja.</p>
+          </div>
+        </div>
+        <span id="user-role" class="badge badge-role hidden">Gost</span>
+        <span id="username" class="username"></span>
+        <button type="button" id="btn-logout" class="btn btn-ghost btn-sm">Odjavi se</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="auth-section" class="auth-section">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab active" data-tab="login" role="tab">Prijava</button>
+          <button type="button" class="tab" data-tab="register" role="tab">Registracija</button>
+        </div>
+
+        <p class="auth-lead">Registrujte se kao gost, izaberite jedan od demo lokala i pošaljite zahtev za rezervaciju.</p>
+
+        <form id="login-form" class="panel card">
+          <h2>Prijava</h2>
+          <div class="field">
+            <label for="login-username">Korisničko ime</label>
+            <input id="login-username" class="input" type="text" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="login-password">Lozinka</label>
+            <input id="login-password" class="input" type="password" required autocomplete="current-password">
+          </div>
+          <p id="login-error" class="alert alert-error hidden"></p>
+          <button type="submit" class="btn btn-primary btn-block">Prijavi se</button>
+        </form>
+
+        <form id="register-form" class="panel card hidden">
+          <h2>Registracija</h2>
+          <div class="field">
+            <label for="reg-username">Korisničko ime</label>
+            <input id="reg-username" class="input" type="text" required minlength="2" autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="reg-password">Lozinka (min. 6 karaktera)</label>
+            <input id="reg-password" class="input" type="password" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="reg-name">Ime</label>
+            <input id="reg-name" class="input" type="text" required>
+          </div>
+          <div class="field">
+            <label for="reg-phone">Telefon</label>
+            <input id="reg-phone" class="input" type="tel" required>
+          </div>
+          <div class="field">
+            <label for="reg-email">Email</label>
+            <input id="reg-email" class="input" type="email" required>
+          </div>
+          <p id="register-error" class="alert alert-error hidden"></p>
+          <p id="register-success" class="alert alert-success hidden"></p>
+          <button type="submit" class="btn btn-primary btn-block">Registruj se</button>
+        </form>
+      </section>
+
+      <section id="reservation-section" class="hidden">
+        <div id="guest-section" class="dashboard guest-dashboard">
+          <div class="dashboard-main">
+            <div class="section-toolbar">
+              <h2 class="section-title">Nova rezervacija</h2>
+              <button type="button" id="btn-refresh-venues" class="btn btn-ghost btn-sm">Osveži lokale</button>
+            </div>
+            <p id="pending-reservation-banner" class="alert alert-pending hidden" role="status">
+              Zahtev je na čekanju - čekamo odgovor lokala.
+            </p>
+            <div id="venue-cards" class="venue-cards" aria-label="Lista lokala"></div>
+            <p id="venue-cards-empty" class="empty-state hidden">Još nema registrovanih lokala.</p>
+            <form id="reservation-form" class="card form-card">
+              <div class="field">
+                <label for="res-venue">Lokal</label>
+                <select id="res-venue" class="input" required>
+                  <option value="">Izaberi lokal</option>
+                </select>
+              </div>
+              <p id="venue-hint" class="venue-hint muted hidden"></p>
+              <div class="field">
+                <label for="res-date">Datum</label>
+                <input id="res-date" class="input" type="date" required>
+              </div>
+              <div class="field">
+                <label for="res-start">Vreme dolaska</label>
+                <input id="res-start" class="input" type="time" required>
+                <p class="muted field-hint">Boravak traje 2 sata od vremena dolaska (do zatvaranja lokala). Poslednji dolazak: najkasnije 2 sata pre kraja radnog vremena.</p>
+              </div>
+              <div class="field">
+                <label for="res-guests">Broj gostiju (max 30)</label>
+                <input id="res-guests" class="input" type="number" min="1" max="30" value="2" required>
+              </div>
+              <div class="field">
+                <label for="res-notes">Napomena (opciono)</label>
+                <input id="res-notes" class="input" type="text" maxlength="200">
+              </div>
+              <p id="reservation-error" class="alert alert-error hidden"></p>
+              <p id="reservation-success" class="alert alert-success hidden"></p>
+              <button type="submit" id="btn-submit-reservation" class="btn btn-primary btn-block">Pošalji zahtev</button>
+            </form>
+          </div>
+          <aside class="dashboard-aside">
+            <div class="card list-card">
+              <div class="card-header">
+                <h3>Moje rezervacije</h3>
+                <button type="button" id="btn-refresh-reservations" class="btn btn-ghost btn-sm">Osveži</button>
+              </div>
+              <ul id="my-reservations-list" class="res-list"></ul>
+              <p id="my-reservations-empty" class="empty-state">Nema rezervacija.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="edit-reservation-modal" class="popup-overlay hidden" role="dialog" aria-modal="true">
+    <div class="popup-box card">
+      <h3>Izmena rezervacije</h3>
+      <form id="edit-reservation-form">
+        <input type="hidden" id="edit-res-id">
+        <div class="field"><label for="edit-res-date">Datum</label><input id="edit-res-date" class="input" type="date" required></div>
+        <div class="field">
+          <label for="edit-res-start">Vreme dolaska</label>
+          <input id="edit-res-start" class="input" type="time" required>
+          <p class="muted field-hint">Trajanje boravka u lokalu je 2 sata (računa se automatski).</p>
+        </div>
+        <div class="field"><label for="edit-res-guests">Broj gostiju</label><input id="edit-res-guests" class="input" type="number" min="1" max="30" required></div>
+        <div class="field"><label for="edit-res-notes">Napomena</label><input id="edit-res-notes" class="input" type="text" maxlength="200"></div>
+        <p id="edit-res-error" class="alert alert-error hidden"></p>
+        <div class="res-item-actions">
+          <button type="button" id="edit-res-cancel" class="btn btn-ghost">Odustani</button>
+          <button type="submit" class="btn btn-primary">Sačuvaj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="action-confirm-modal" class="popup-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="action-confirm-title">
+    <div class="popup-box card action-confirm-box">
+      <h3 id="action-confirm-title">Otkazati rezervaciju?</h3>
+      <p id="action-confirm-message" class="action-confirm-message muted"></p>
+      <dl id="action-confirm-details" class="status-result-details"></dl>
+      <div class="action-confirm-actions">
+        <button type="button" id="action-confirm-cancel" class="btn btn-ghost">Odustani</button>
+        <button type="button" id="action-confirm-ok" class="btn btn-danger">Otkaži rezervaciju</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmed-popup" class="popup-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirmed-popup-title">
+    <div id="confirmed-popup-box" class="popup-box status-result">
+      <div id="confirmed-popup-icon" class="status-result-icon" aria-hidden="true"></div>
+      <h3 id="confirmed-popup-title"></h3>
+      <p id="confirmed-popup-lead" class="status-result-lead"></p>
+      <dl id="confirmed-popup-details" class="status-result-details"></dl>
+      <button type="button" id="confirmed-popup-close" class="btn btn-primary btn-block">U redu</button>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
